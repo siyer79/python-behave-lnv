@@ -43,10 +43,18 @@ def step_impl(context):
 
 @then('is that bridge up?')
 def step_impl(context):
-    status, output = commands.getstatusoutput('grep "auto vni" /etc/network/interfaces | nawk \'{print $2}\'')
+    status, output = commands.getstatusoutput('grep "vxlan-id" /etc/network/interfaces | nawk \'{print $2}\'')
 
-    # Create an Array with list of VNI's set on interfaces file
-    vnilist = output.split('\n')
+    # Create an Array with vxlan-id's
+    vxlanids = output.split('\n')
+
+    vnilist = []
+
+    #  Look in the nearby lines of the vxlan id for "auto" and then add that
+    #  interface id in array vnilist
+    for vxlanid in vxlanids:
+       status, output = commands.getstatusoutput('grep -C 2 "vxlan-id '+vxlanid+'" /etc/network/interfaces | grep auto | nawk \'{print $2}\'')
+       vnilist.append(output)
 
     bridgelist = []
 
@@ -78,3 +86,5 @@ def step_impl(context):
 @then('do I have a route to the remote endpoints?')
 def step_impl(context):
     pass
+
+
